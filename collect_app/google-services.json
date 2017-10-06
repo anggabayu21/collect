@@ -1,27 +1,40 @@
 {
   "project_info": {
-    "project_number": "322300403941",
-    "project_id": "api-project-322300403941"
+    "project_number": "399252845861",
+    "project_id": "pdanweb-1496113199895"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:322300403941:android:5e1d7c3c296329e8",
+        "mobilesdk_app_id": "1:399252845861:android:e9697771389072b9",
         "android_client_info": {
-          "package_name": "org.odk.collect.android"
+          "package_name": "com.gic.collect.android"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "399252845861-5vr2rh88g1vn9qp759ruh443fhjs16l2.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "399252845861-g9rq32qt2chrdr5o67rp12d93cmg9hts.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gic.collect.android",
+            "certificate_hash": "59f820e278e649b62719785c382d6e3a6484184c"
+          }
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDzdzuFvfI_BgaMAbIOBpfrVG3AIwhGIP8"
+          "current_key": "AIzaSyAygrQz5dZjd0-srYJZlFGIBA5V2J51rPw"
         }
       ],
       "services": {
         "analytics_service": {
           "status": 2,
           "analytics_property": {
-            "tracking_id": "UA-91951913-1"
+            "tracking_id": "UA-105602834-2"
           }
         },
         "appinvite_service": {
