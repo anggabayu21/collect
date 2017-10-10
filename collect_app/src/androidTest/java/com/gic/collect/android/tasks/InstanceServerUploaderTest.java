@@ -56,7 +56,7 @@ public class InstanceServerUploaderTest extends MockedServerTest {
             RecordedRequest r = nextRequest();
             assertEquals("HEAD", r.getMethod());
             TestUtils.assertMatches("/submission\\?deviceID=\\w+%3A\\w+", r.getPath());
-            TestUtils.assertMatches("Dalvik/.* org.odk.collect.android/.*", r.getHeader("User-Agent"));
+            TestUtils.assertMatches("Dalvik/.* com.gic.collect.android/.*", r.getHeader("User-Agent"));
             assertEquals("1.0", r.getHeader("X-OpenRosa-Version"));
             assertEquals("gzip,deflate", r.getHeader("Accept-Encoding"));
         }
@@ -66,7 +66,7 @@ public class InstanceServerUploaderTest extends MockedServerTest {
             RecordedRequest r = nextRequest();
             assertEquals("POST", r.getMethod());
             assertEquals("/submission", r.getPath());
-            TestUtils.assertMatches("Dalvik/.* org.odk.collect.android/.*", r.getHeader("User-Agent"));
+            TestUtils.assertMatches("Dalvik/.* com.gic.collect.android/.*", r.getHeader("User-Agent"));
             assertEquals("1.0", r.getHeader("X-OpenRosa-Version"));
             assertEquals("gzip,deflate", r.getHeader("Accept-Encoding"));
             TestUtils.assertMatches("multipart/form-data; boundary=.*", r.getHeader("Content-Type"));

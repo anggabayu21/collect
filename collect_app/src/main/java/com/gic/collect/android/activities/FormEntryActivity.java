@@ -2933,7 +2933,7 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
 
     private void sendSavedBroadcast() {
         Intent i = new Intent();
-        i.setAction("org.odk.collect.android.FormSaved");
+        i.setAction("com.gic.collect.android.FormSaved");
         this.sendBroadcast(i);
     }
 

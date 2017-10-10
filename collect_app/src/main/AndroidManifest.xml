@@ -87,11 +87,11 @@ the specific language governing permissions and limitations under the License.
 
         <provider
             android:name="com.gic.collect.android.provider.FormsProvider"
-            android:authorities="org.odk.collect.android.provider.odk.forms"
+            android:authorities="com.gic.collect.android.provider.odk.forms"
             android:exported="true" />
         <provider
             android:name="com.gic.collect.android.provider.InstanceProvider"
-            android:authorities="org.odk.collect.android.provider.odk.instances"
+            android:authorities="com.gic.collect.android.provider.odk.instances"
             android:exported="true" />
 
         <activity
@@ -264,7 +264,7 @@ the specific language governing permissions and limitations under the License.
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
             <intent-filter>
-                <action android:name="org.odk.collect.android.FormSaved" />
+                <action android:name="com.gic.collect.android.FormSaved" />
             </intent-filter>
         </receiver>
         <!-- Register AnalyticsReceiver and AnalyticsService to support background

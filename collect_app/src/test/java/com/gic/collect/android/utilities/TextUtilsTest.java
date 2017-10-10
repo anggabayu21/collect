@@ -10,7 +10,7 @@ import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = 21, manifest = "src/main/AndroidManifest.xml",
-        packageName = "org.odk.collect")
+        packageName = "com.gic.collect")
 public class TextUtilsTest {
 
     /**

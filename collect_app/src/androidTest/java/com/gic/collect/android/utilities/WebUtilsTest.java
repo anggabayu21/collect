@@ -37,7 +37,7 @@ public class WebUtilsTest extends MockedServerTest {
         // then
         RecordedRequest r = nextRequest();
         assertEquals("GET /some-path HTTP/1.1", r.getRequestLine());
-        assertTrue(r.getHeader("User-Agent").matches("Dalvik/.* org.odk.collect.android/.*"));
+        assertTrue(r.getHeader("User-Agent").matches("Dalvik/.* com.gic.collect.android/.*"));
     }
 
     @Test
@@ -46,7 +46,7 @@ public class WebUtilsTest extends MockedServerTest {
         WebUtils.getXmlDocument(url("/list-forms"), httpContext(), httpClient());
 
         // then
-        TestUtils.assertMatches("Dalvik/.* org.odk.collect.android/.*",
+        TestUtils.assertMatches("Dalvik/.* com.gic.collect.android/.*",
                 nextRequest().getHeader("User-Agent"));
     }
 
