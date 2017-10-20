@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/found_in_main">
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="edit_saved"
             android:title="@string/review_data" />
         <CheckBoxPreference
@@ -10,7 +10,7 @@
             android:key="send_finalized"
             android:title="@string/send_data" />
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="view_sent"
             android:title="@string/view_sent_forms" />
         <CheckBoxPreference

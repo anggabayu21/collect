@@ -227,7 +227,7 @@ public class MainMenuActivity extends AppCompatActivity {
             //mainMenuMessageLabel.setText(Collect.getInstance()
             //        .getVersionedAppName());
             // change code
-            mainMenuMessageLabel.setText("DRM Data Collector");
+            mainMenuMessageLabel.setText("DRM Survey");
         }
 
         File f = new File(Collect.ODK_ROOT + "/collect.settings");
@@ -323,7 +323,7 @@ public class MainMenuActivity extends AppCompatActivity {
                 AdminPreferencesActivity.ADMIN_PREFERENCES, 0);
 
         boolean edit = sharedPreferences.getBoolean(
-                AdminKeys.KEY_EDIT_SAVED, true);
+                AdminKeys.KEY_EDIT_SAVED, false);
         if (!edit) {
             if (reviewDataButton != null) {
                 reviewDataButton.setVisibility(View.GONE);
@@ -353,7 +353,7 @@ public class MainMenuActivity extends AppCompatActivity {
         }
 
         boolean viewSent = sharedPreferences.getBoolean(
-                AdminKeys.KEY_VIEW_SENT, true);
+                AdminKeys.KEY_VIEW_SENT, false);
         if (!viewSent) {
             if (viewSentFormsButton != null) {
                 viewSentFormsButton.setVisibility(View.GONE);

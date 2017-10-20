@@ -26,12 +26,12 @@
     <string name="cannot_edit_completed_form">This form cannot be edited once it has been marked as finalized. It may be encrypted.</string>
     <string name="capture_audio">Record Sound</string>
     <string name="capture_image">Take Picture</string>
-    <string name="capture_osm">Launch OpenMapKit</string>
+    <string name="capture_osm">Launch Map Validation</string>
     <string name="recapture_osm">Redo OSM Tagging</string>
     <string name="capture_video">Record Video</string>
     <string name="change_language">Change Language</string>
-    <string name="change_password">ODK Password</string>
-    <string name="change_username">ODK Username</string>
+    <string name="change_password">DMS Password</string>
+    <string name="change_username">DMS Username</string>
     <string name="clearanswer_confirm">Remove the response to \"%s\"?</string>
     <string name="clear_answer">Remove response</string>
     <string name="clear_answer_ask">Remove This Response?</string>
@@ -60,8 +60,8 @@
     <string name="do_not_save">Ignore Changes</string>
     <string name="entering_repeat">Add Group</string>
     <string name="entering_repeat_ask">Add New Group?</string>
-    <string name="enter_data">Fill Blank Form</string>
-    <string name="enter_data_button">Fill Blank Form</string>
+    <string name="enter_data">Collect Data</string>
+    <string name="enter_data_button">Collect Data</string>
     <string name="error_occured">Error Occurred</string>
     <string name="error_attaching_binary_file">An error occurred while attaching the media: %s</string>
     <string name="fetching_file">Getting %1$s.\n\nForm %2$s of %3$s form(s).</string>
@@ -74,7 +74,7 @@
     <string name="forms">Blank Forms</string>
     <string name="getting_location">Loading Location</string>
     <string name="get_barcode">Get Barcode</string>
-    <string name="get_forms">Get Blank Form</string>
+    <string name="get_forms">Download Survey Form</string>
     <string name="get_location">Record Location</string>
     <string name="provider_disabled_error">Sorry, Location providers are disabled!</string>
     <string name="invalid_answer_error">Sorry, this response is invalid!</string>
@@ -90,7 +90,7 @@
     <string name="location_accuracy">Accuracy is %1$s m</string>
     <string name="main_menu">Main Menu</string>
     <string name="main_menu_details">Data collector for DRM</string>
-    <string name="manage_files">Delete Saved Form</string>
+    <string name="manage_files">Delete Survey Form</string>
     <string name="mark_finished">Mark form as finalized</string>
     <string name="noselect_error">Sorry, you have not selected any forms!</string>
     <string name="no_connection">No network connection available</string>
@@ -118,8 +118,8 @@
     <string name="save_enter_data_description">You are at the end of %s.</string>
     <string name="saving_form">Saving Form</string>
     <string name="sending_items">Sending %1$s of %2$s form(s)</string>
-    <string name="send_data">Send Finalized Form</string>
-    <string name="send_data_button">Send Finalized Form (%s)</string>
+    <string name="send_data">Submit Collected Data</string>
+    <string name="send_data_button">Submit Collected Data (%s)</string>
     <string name="send_selected_data">Send Selected</string>
     <string name="view_sent_forms">View Sent Form</string>
     <string name="view_sent_forms_button">View Sent Form (%s)</string>
@@ -369,7 +369,7 @@
     <string name="edited_osm_file">Edited OSM XML File:</string>
     <string name="invalid_osm_data">Something went wrong. We did not get valid OSM data.</string>
     <string name="alert">Alert</string>
-    <string name="install_openmapkit">Please install OpenMapKit!</string>
+    <string name="install_openmapkit">Please install Map Validation!</string>
     <string name="go_back">Go back</string>
     <string name="download_selected">Download Selected</string>
     <string name="record_geopoint">Record GeoPoint</string>
