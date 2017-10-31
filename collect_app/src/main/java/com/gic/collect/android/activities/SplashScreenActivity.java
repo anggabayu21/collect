@@ -56,7 +56,7 @@ public class SplashScreenActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Timber.i("Test Splash");
         // must be at the beginning of any activity that can be called from an external intent
         try {
             Collect.createODKDirs();

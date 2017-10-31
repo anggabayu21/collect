@@ -282,6 +282,8 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
 
         initToolbar();
 
+        Timber.i("Test next button");
+
         nextButton = (ImageButton) findViewById(R.id.form_forward_button);
         nextButton.setOnClickListener(new OnClickListener() {
             @Override

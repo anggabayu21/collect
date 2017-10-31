@@ -95,6 +95,7 @@ public class Collect extends Application {
     private FormController formController = null;
     private ExternalDataManager externalDataManager;
     private Tracker tracker;
+    private String pageActive = "";
 
     public static Collect getInstance() {
         return singleton;
@@ -253,7 +254,7 @@ public class Collect extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        Timber.i("Test collect");
         PRNGFixes.apply();
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         JodaTimeAndroid.init(this);
@@ -320,6 +321,14 @@ public class Collect extends Application {
                 FirebaseCrash.report(t);
             }
         }
+    }
+
+    public void setPageActive(String value){
+        this.pageActive = value;
+    }
+
+    public String getPageActive(){
+        return this.pageActive;
     }
 
 }

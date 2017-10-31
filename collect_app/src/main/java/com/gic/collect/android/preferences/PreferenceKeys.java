@@ -90,7 +90,7 @@ public final class PreferenceKeys {
         hashMap.put(KEY_GOOGLE_SHEETS_URL,          "");
         hashMap.put(KEY_FORMLIST_URL,               Collect.getInstance().getString(com.gic.collect.android.R.string.default_odk_formlist));
         hashMap.put(KEY_SUBMISSION_URL,             Collect.getInstance().getString(com.gic.collect.android.R.string.default_odk_submission));
-        hashMap.put(KEY_NAVIGATION,                 "swipe");
+        hashMap.put(KEY_NAVIGATION,                 "swipe_buttons");
         hashMap.put(KEY_CONSTRAINT_BEHAVIOR,        "on_swipe");
         hashMap.put(KEY_COMPLETED_DEFAULT,          true);
         hashMap.put(KEY_MAP_SDK,                    "google_maps");

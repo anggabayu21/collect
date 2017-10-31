@@ -38,6 +38,7 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import com.gic.collect.android.listeners.MenuPageListener;
 import com.gic.collect.android.listeners.RecyclerViewClickListener;
 import com.gic.collect.android.provider.InstanceProviderAPI;
 import com.gic.collect.android.application.Collect;
@@ -45,6 +46,7 @@ import com.gic.collect.android.database.ActivityLogger;
 import com.gic.collect.android.utilities.ApplicationConstants;
 import com.gic.collect.android.R;
 import com.gic.collect.android.adapters.SortDialogAdapter;
+import com.gic.collect.android.logic.FormController;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -173,6 +175,7 @@ abstract class AppListActivity extends AppCompatActivity {
 
         final MenuItem sortItem = menu.findItem(R.id.menu_sort);
         final MenuItem searchItem = menu.findItem(R.id.menu_filter);
+        final MenuItem homeItem = menu.findItem(R.id.menu_home);
         searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setQueryHint(getResources().getString(R.string.search));
         searchView.setMaxWidth(Integer.MAX_VALUE);
@@ -221,6 +224,11 @@ abstract class AppListActivity extends AppCompatActivity {
             case R.id.menu_sort:
                 bottomSheetDialog.show();
                 isBottomDialogShown = true;
+                return true;
+            case R.id.menu_home:
+                Timber.i("Test menu home click");
+                Collect.getInstance().setPageActive("homeButtonPressed");
+                finish();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -313,4 +321,6 @@ abstract class AppListActivity extends AppCompatActivity {
             bottomSheetDialog.show();
         }
     }
+
+
 }

@@ -21,18 +21,25 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import com.gic.collect.android.logic.FormRegisterUserDetails;
 import com.gic.collect.android.tasks.InstanceServerUploader;
 import com.gic.collect.android.R;
 import com.gic.collect.android.application.Collect;
 import com.gic.collect.android.dao.InstancesDao;
 import com.gic.collect.android.listeners.InstanceUploaderListener;
 import com.gic.collect.android.provider.InstanceProviderAPI.InstanceColumns;
+import com.gic.collect.android.tasks.RegisterUserTask;
 import com.gic.collect.android.utilities.ApplicationConstants;
 import com.gic.collect.android.utilities.AuthDialogUtility;
+import com.gic.collect.android.utilities.RegisterUserDialogUtility;
+import com.gic.collect.android.utilities.ToastUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,9 +55,10 @@ import timber.log.Timber;
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class InstanceUploaderActivity extends AppCompatActivity implements InstanceUploaderListener,
-        AuthDialogUtility.AuthDialogUtilityResultListener {
+        AuthDialogUtility.AuthDialogUtilityResultListener, RegisterUserDialogUtility.RegisterUserDialogUtilityListener, RegisterUserTask.RegisterUserListener {
     private static final int PROGRESS_DIALOG = 1;
     private static final int AUTH_DIALOG = 2;
+    private static final int REGISTER_USER_DIALOG = 3;
 
     private static final String AUTH_URI = "auth";
     private static final String ALERT_MSG = "alertmsg";
@@ -64,6 +72,7 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
     private boolean alertShowing;
 
     private InstanceServerUploader instanceServerUploader;
+    private RegisterUserTask registerUserTask;
 
     // maintain a list of what we've yet to send, in case we're interrupted by auth requests
     private Long[] instancesToSend;
@@ -149,7 +158,7 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
             instanceServerUploader.setUploaderListener(this);
         }
         if (alertShowing) {
-            createAlertDialog(alertMsg);
+            createAlertDialog(alertMsg,true);
         }
         super.onResume();
     }
@@ -273,7 +282,7 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
         if (message.length() == 0) {
             message.append(getString(R.string.no_forms_uploaded));
         }
-        createAlertDialog(message.toString().trim());
+        createAlertDialog(message.toString().trim(),true);
     }
 
     private String localizeDefaultAggregateSuccessfulText(String text) {
@@ -281,6 +290,43 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
             text = getString(R.string.success);
         }
         return text;
+    }
+
+    /**
+     * Starts the send registration form and shows the progress dialog.
+     */
+    private void sendRegisterUserFormActivity(FormRegisterUserDetails formRegisterUserDetails) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
+
+        Timber.i("Test get called from the utility");
+
+        if (ni == null || !ni.isConnected()) {
+            ToastUtils.showShortToast(R.string.no_connection);
+        } else {
+
+            if (progressDialog != null) {
+                // This is needed because onPrepareDialog() is broken in 1.6.
+                progressDialog.setMessage(getString(R.string.please_wait));
+            }
+            showDialog(PROGRESS_DIALOG);
+
+            if (registerUserTask != null
+                    && registerUserTask.getStatus() != AsyncTask.Status.FINISHED) {
+                return; // we are already doing the download!!!
+            } else if (registerUserTask != null) {
+                registerUserTask.setRegisterUserListener(null);
+                registerUserTask.cancel(true);
+                registerUserTask = null;
+            }
+
+            registerUserTask = new RegisterUserTask();
+            registerUserTask.setFormRegisterUserDetails(formRegisterUserDetails);
+            registerUserTask.setRegisterUserListener(this);
+            registerUserTask.execute();
+
+        }
     }
 
     @Override
@@ -324,6 +370,13 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
                         "onCreateDialog.AUTH_DIALOG", "show");
 
                 return new AuthDialogUtility().createDialog(this, this);
+            case REGISTER_USER_DIALOG:
+                Collect.getInstance().getActivityLogger().logAction(this,
+                        "onCreateDialog.REGISTER_USER_DIALOG", "show");
+
+                alertShowing = false;
+
+                return new RegisterUserDialogUtility().createDialog(this,this);
         }
 
         return null;
@@ -367,7 +420,7 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
     }
 
 
-    private void createAlertDialog(String message) {
+    private void createAlertDialog(String message, final boolean shouldExit) {
         Collect.getInstance().getActivityLogger().logAction(this, "createAlertDialog", "show");
 
         alertDialog = new AlertDialog.Builder(this).create();
@@ -382,7 +435,9 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
                                 "createAlertDialog", "OK");
                         // always exit this activity since it has no interface
                         alertShowing = false;
-                        finish();
+                        if (shouldExit) {
+                            finish();
+                        }
                         break;
                 }
             }
@@ -393,6 +448,34 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
         alertShowing = true;
         alertMsg = message;
         alertDialog.show();
+    }
+
+    public void registerUserComplete(FormRegisterUserDetails result) {
+        dismissDialog(PROGRESS_DIALOG);
+        registerUserTask.setRegisterUserListener(null);
+        registerUserTask = null;
+
+        if (result == null) {
+            Timber.e("Register use returned null.  That shouldn't happen");
+            // Just displayes "error occured" to the user, but this should never happen.
+            createAlertDialog(getString(R.string.error_occured),true);
+            return;
+        }
+
+        if (result.errorStr.contains("Error")) {
+            // Download failed
+            String dialogMessage = result.errorStr;
+            String dialogTitle = "Input Error";
+            showDialog(REGISTER_USER_DIALOG);
+            createAlertDialog(dialogMessage,false);
+        }
+        else if (result.errorStr.contains("Success")) {
+            // Download failed
+            String dialogMessage = "Success Register a new user, please check your email for confirmation!";
+            String dialogTitle = "Succes";
+            createAlertDialog(dialogMessage,true);
+        }
+
     }
 
     @Override
@@ -407,6 +490,25 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
 
     @Override
     public void cancelledUpdatingCredentials() {
+        finish();
+    }
+
+    @Override
+    public void registerUser() {
+
+        dismissDialog(AUTH_DIALOG);
+        showDialog(REGISTER_USER_DIALOG);
+    }
+
+    /* From RegisterUserDialogUtility */
+    @Override
+    public void sendRegisterUserForm(FormRegisterUserDetails formRegisterUserDetails) {
+        Timber.i("Test Instanceuploader call it inside activity");
+        sendRegisterUserFormActivity(formRegisterUserDetails);
+    }
+
+    @Override
+    public void cancelledRegisterUser() {
         finish();
     }
 }

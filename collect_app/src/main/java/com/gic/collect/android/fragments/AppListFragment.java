@@ -14,6 +14,7 @@ limitations under the License.
 
 package com.gic.collect.android.fragments;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
 import android.support.design.widget.BottomSheetDialog;
@@ -42,6 +43,8 @@ import com.gic.collect.android.adapters.SortDialogAdapter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+
+import timber.log.Timber;
 
 abstract class AppListFragment extends ListFragment {
 
@@ -103,6 +106,7 @@ abstract class AppListFragment extends ListFragment {
 
         final MenuItem sortItem = menu.findItem(R.id.menu_sort);
         final MenuItem searchItem = menu.findItem(R.id.menu_filter);
+        final MenuItem homeItem = menu.findItem(R.id.menu_home);
         final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setQueryHint(getResources().getString(R.string.search));
         searchView.setMaxWidth(Integer.MAX_VALUE);
@@ -144,6 +148,11 @@ abstract class AppListFragment extends ListFragment {
         switch (item.getItemId()) {
             case R.id.menu_sort:
                 bottomSheetDialog.show();
+                return true;
+            case R.id.menu_home:
+                Timber.i("Test menu home click");
+                Collect.getInstance().setPageActive("homeButtonPressed");
+                getActivity().finish();
                 return true;
         }
         return super.onOptionsItemSelected(item);

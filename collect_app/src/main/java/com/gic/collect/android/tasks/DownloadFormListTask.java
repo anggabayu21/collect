@@ -92,8 +92,10 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
         // If we can't get the document, return the error, cancel the task
         if (result.errorMessage != null) {
             if (result.responseCode == 401) {
+                Timber.i("Test need auth");
                 formList.put(DL_AUTH_REQUIRED, new FormDetails(result.errorMessage));
             } else {
+                Timber.i("Test result error");
                 formList.put(DL_ERROR_MSG, new FormDetails(result.errorMessage));
             }
             return formList;

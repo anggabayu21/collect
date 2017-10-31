@@ -115,6 +115,8 @@ public class FormChooserList extends FormListActivity implements DiskSyncListene
         long idFormsTable = listView.getAdapter().getItemId(position);
         Uri formUri = ContentUris.withAppendedId(FormsProviderAPI.FormsColumns.CONTENT_URI, idFormsTable);
 
+        Timber.i("Test formUri = " + formUri);
+
         Collect.getInstance().getActivityLogger().logAction(this, "onListItemClick",
                 formUri.toString());
 

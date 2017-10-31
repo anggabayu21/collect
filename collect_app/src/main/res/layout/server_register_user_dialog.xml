@@ -30,7 +30,49 @@
         android:textColor="@android:color/darker_gray" />
             
     <EditText
-        android:id="@+id/username_edit"
+        android:id="@+id/username_register"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:scrollHorizontally="true"
+        android:inputType="textNoSuggestions"
+        android:gravity="fill_horizontal"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:text="Email"
+        android:gravity="start"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/darker_gray" />
+
+    <EditText
+        android:id="@+id/email_register"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:scrollHorizontally="true"
+        android:inputType="textNoSuggestions"
+        android:gravity="fill_horizontal"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:text="Fistname"
+        android:gravity="start"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/darker_gray" />
+
+    <EditText
+        android:id="@+id/firstname_register"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:layout_marginLeft="20dip"
@@ -51,7 +93,7 @@
         android:textColor="@android:color/darker_gray" />
             
     <EditText
-        android:id="@+id/password_edit"
+        android:id="@+id/password_register"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:layout_marginLeft="20dip"
@@ -61,36 +103,25 @@
         android:gravity="fill_horizontal"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
-    <Button
-        android:id="@+id/login_edit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:textAllCaps="false"
-        android:textSize="21sp"
-        android:textStyle="normal"/>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="40dp"/>
-
     <TextView
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_marginLeft="20dip"
         android:layout_marginRight="20dip"
-        android:text="Or Register to the Server"
+        android:text="Password Confirmation"
         android:gravity="start"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textColor="@android:color/darker_gray" />
 
-    <Button
-        android:id="@+id/register_user"
-        android:layout_width="match_parent"
+    <EditText
+        android:id="@+id/password2_register"
         android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:textAllCaps="false"
-        android:textSize="21sp"
-        android:textStyle="normal"/>
+        android:layout_width="match_parent"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:scrollHorizontally="true"
+        android:inputType="textPassword"
+        android:gravity="fill_horizontal"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
         
 </LinearLayout>

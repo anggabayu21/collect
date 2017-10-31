@@ -26,17 +26,23 @@ import org.kxml2.kdom.Document;
 
 import com.gic.collect.android.R;
 import com.gic.collect.android.application.Collect;
+import com.gic.collect.android.logic.FormRegisterUserDetails;
 import com.gic.collect.android.preferences.PreferenceKeys;
+
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpHost;
 import org.opendatakit.httpclientandroidlib.HttpRequest;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
+import org.opendatakit.httpclientandroidlib.NoHttpResponseException;
 import org.opendatakit.httpclientandroidlib.auth.AuthScope;
 import org.opendatakit.httpclientandroidlib.auth.Credentials;
 import org.opendatakit.httpclientandroidlib.auth.UsernamePasswordCredentials;
 import org.opendatakit.httpclientandroidlib.client.AuthCache;
+import org.opendatakit.httpclientandroidlib.client.ClientProtocolException;
+import org.opendatakit.httpclientandroidlib.client.CookieStore;
+import org.opendatakit.httpclientandroidlib.cookie.Cookie;
 import org.opendatakit.httpclientandroidlib.client.CredentialsProvider;
 import org.opendatakit.httpclientandroidlib.client.HttpClient;
 import org.opendatakit.httpclientandroidlib.client.config.AuthSchemes;
@@ -47,26 +53,37 @@ import org.opendatakit.httpclientandroidlib.client.methods.HttpHead;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpPost;
 import org.opendatakit.httpclientandroidlib.client.protocol.HttpClientContext;
 import org.opendatakit.httpclientandroidlib.config.SocketConfig;
+import org.opendatakit.httpclientandroidlib.conn.ConnectTimeoutException;
 import org.opendatakit.httpclientandroidlib.impl.auth.BasicScheme;
 import org.opendatakit.httpclientandroidlib.impl.client.BasicAuthCache;
 import org.opendatakit.httpclientandroidlib.impl.client.HttpClientBuilder;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
+import org.opendatakit.httpclientandroidlib.NameValuePair;
+import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
+import org.opendatakit.httpclientandroidlib.client.entity.UrlEncodedFormEntity;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
+import java.net.HttpCookie;
 
 import timber.log.Timber;
 
@@ -315,6 +332,7 @@ public final class WebUtils {
             HttpContext localContext, HttpClient httpclient) {
         URI u;
         try {
+            Timber.i("Test urlString = "+urlString);
             URL url = new URL(urlString);
             u = url.toURI();
         } catch (URISyntaxException | MalformedURLException e) {
@@ -330,12 +348,15 @@ public final class WebUtils {
 
         // if https then enable preemptive basic auth...
         if (u.getScheme().equals("https")) {
+            Timber.i("Test https through");
             enablePreemptiveBasicAuth(localContext, u.getHost());
         }
 
+        Timber.i("Test httpGet");
         // set up request...
         HttpGet req = WebUtils.createOpenRosaHttpGet(u);
         req.addHeader(WebUtils.ACCEPT_ENCODING_HEADER, WebUtils.GZIP_CONTENT_ENCODING);
+        Timber.i("Test httpGet pass");
 
         HttpResponse response;
         try {
@@ -353,6 +374,7 @@ public final class WebUtils {
                 String webError = response.getStatusLine().getReasonPhrase()
                         + " (" + statusCode + ")";
 
+                Timber.i("Test response1");
                 return new DocumentFetchResult(u.toString()
                         + " responded with: " + webError, statusCode);
             }
@@ -360,6 +382,7 @@ public final class WebUtils {
             if (entity == null) {
                 String error = "No entity body returned from: " + u.toString();
                 Timber.e(error);
+                Timber.i("Test response2");
                 return new DocumentFetchResult(error, 0);
             }
 
@@ -373,6 +396,7 @@ public final class WebUtils {
                         + " is not text/xml.  This is often caused a network proxy.  Do you need "
                         + "to login to your network?";
                 Timber.e(error);
+                Timber.i("Test response3");
                 return new DocumentFetchResult(error, 0);
             }
             // parse response
@@ -428,6 +452,7 @@ public final class WebUtils {
                 String error = "Parsing failed with " + e.getMessage()
                         + "while accessing " + u.toString();
                 Timber.e(error);
+                Timber.i("Test response4");
                 return new DocumentFetchResult(error, 0);
             }
 
@@ -454,8 +479,10 @@ public final class WebUtils {
                     Timber.w("%s unrecognized version(s): %s", WebUtils.OPEN_ROSA_VERSION_HEADER, b.toString());
                 }
             }
+            Timber.i("Test success response");
             return new DocumentFetchResult(doc, isOR);
         } catch (Exception e) {
+            Timber.i("Test error response");
             String cause;
             Throwable c = e;
             while (c.getCause() != null) {
@@ -467,6 +494,212 @@ public final class WebUtils {
 
             Timber.w(error);
             return new DocumentFetchResult(error, 0);
+        }
+    }
+
+    public static FormRegisterUserDetails sendRegisterFormToServer(FormRegisterUserDetails formRegisterUserDetails, String urlString,
+                                                                   HttpContext localContext, HttpClient httpclient) {
+        Uri u = Uri.parse(urlString);
+        Timber.i("TEST url = "+urlString);
+        ResponseMessageRegisterUserParser messageParser = null;
+        Map<Uri, Uri> uriRemap = new HashMap<Uri, Uri>();
+        boolean openRosaServer = false;
+        if (uriRemap.containsKey(u)) {
+            // we already issued a head request and got a response,
+            // so we know the proper URL to send the submission to
+            // and the proper scheme. We also know that it was an
+            // OpenRosa compliant server.
+            openRosaServer = true;
+            u = uriRemap.get(u);
+
+            // if https then enable preemptive basic auth...
+            if (u.getScheme().equals("https")) {
+                WebUtils.enablePreemptiveBasicAuth(localContext, u.getHost());
+            }
+
+            Timber.i("Using Uri remap for register new user. Now: %s", u.toString());
+        } else {
+            if (u.getHost() == null) {
+                Timber.i("Host name may not be null");
+
+                formRegisterUserDetails.setErrorStr("Error Host name may not be null");
+                return formRegisterUserDetails;
+            }
+
+            // if https then enable preemptive basic auth...
+            if (u.getScheme() != null && u.getScheme().equals("https")) {
+                WebUtils.enablePreemptiveBasicAuth(localContext, u.getHost());
+            }
+
+            // we need to issue a head request
+            HttpHead httpHead = WebUtils.createOpenRosaHttpHead(u);
+
+            // prepare response
+            HttpResponse response = null;
+            try {
+                Timber.i("Issuing HEAD request for register new user to: %s", u.toString());
+
+                response = httpclient.execute(httpHead, localContext);
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                    // clear the cookies -- should not be necessary?
+                    Collect.getInstance().getCookieStore().clear();
+
+                    WebUtils.discardEntityBytes(response);
+
+                    formRegisterUserDetails.setErrorStr("Error false");
+                    return formRegisterUserDetails;
+                } else if (statusCode == 204) {
+                    Header[] locations = response.getHeaders("Location");
+                    WebUtils.discardEntityBytes(response);
+                    if (locations != null && locations.length == 1) {
+                        try {
+                            Uri newURI = Uri.parse(
+                                    URLDecoder.decode(locations[0].getValue(), "utf-8"));
+                            if (u.getHost().equalsIgnoreCase(newURI.getHost())) {
+                                openRosaServer = true;
+                                // trust the server to tell us a new location
+                                // ... and possibly to use https instead.
+                                uriRemap.put(u, newURI);
+                                u = newURI;
+                            } else {
+
+                                formRegisterUserDetails.setErrorStr("Error true");
+                                return formRegisterUserDetails;
+                            }
+                        } catch (Exception e) {
+                            Timber.e(e, "Exception thrown parsing URI for url %s", urlString);
+
+                            formRegisterUserDetails.setErrorStr("Error true");
+                            return formRegisterUserDetails;
+                        }
+                    }
+                } else {
+                    // may be a server that does not handle
+                    WebUtils.discardEntityBytes(response);
+
+                    Timber.w("Status code on Head request: %d", statusCode);
+                    Timber.i("Test cookie = "+Collect.getInstance().getCookieStore()); //Test cookie = [[version: 0][name: csrftoken][value: GWvW6oKldupachgGE4I6Atw38cfg5FKQhub5fr72yodyKodZezX5pXpFuUmIB55S][domain: gicdata.ddns.net][path: /][expiry: Mon Oct 29 17:38:12 GMT+07:00 2018]]
+
+                }
+            } catch (ClientProtocolException | ConnectTimeoutException | UnknownHostException | SocketTimeoutException | NoHttpResponseException | SocketException e) {
+                if (e instanceof ClientProtocolException) {
+
+                    Timber.i(e, "Client Protocol Exception");
+                } else if (e instanceof ConnectTimeoutException) {
+
+                    Timber.i(e, "Connection Timeout");
+                } else if (e instanceof UnknownHostException) {
+
+                    Timber.i(e, "Network Connection Failed");
+                } else if (e instanceof SocketTimeoutException) {
+
+                    Timber.i(e, "Connection timeout");
+                } else {
+
+                    Timber.i(e, "Network Connection Refused");
+                }
+
+                formRegisterUserDetails.setErrorStr("Error true");
+                return formRegisterUserDetails;
+            } catch (Exception e) {
+                String msg = e.getMessage();
+                if (msg == null) {
+                    msg = e.toString();
+                }
+
+                Timber.e(e);
+                formRegisterUserDetails.setErrorStr("Error true");
+                return formRegisterUserDetails;
+            }
+        }
+
+        HttpPost req = WebUtils.createOpenRosaHttpPost(u);
+        // Add data
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(6);
+
+        CookieStore cookieStore = Collect.getInstance().getCookieStore();
+        List<Cookie> cookieList = cookieStore.getCookies();
+        String csrfValue = "";
+        for (Cookie cookie : cookieList) {
+            try {
+                Timber.i("Test cookie domain = "+ cookie.getDomain() );
+                Timber.i("Test cookie name = "+ cookie.getName() );
+                Timber.i("Test cookie value = "+ cookie.getValue() );
+
+                if(cookie.getName().equals("csrftoken")){
+                    csrfValue = cookie.getValue();
+                }
+
+            } catch (Exception ex) {
+                Timber.i("Cookie rejected: \""
+                        + cookie + "\". " + ex.getMessage());
+            }
+        }
+
+        Timber.i("Test csrf = "+csrfValue);
+        formRegisterUserDetails.csrf = csrfValue;
+        nameValuePairs.add(new BasicNameValuePair("csrfmiddlewaretoken", csrfValue));
+        nameValuePairs.add(new BasicNameValuePair("username", formRegisterUserDetails.username));
+        nameValuePairs.add(new BasicNameValuePair("email", formRegisterUserDetails.email));
+        nameValuePairs.add(new BasicNameValuePair("password1", formRegisterUserDetails.password1));
+        nameValuePairs.add(new BasicNameValuePair("password2", formRegisterUserDetails.password2));
+        nameValuePairs.add(new BasicNameValuePair("first_name", formRegisterUserDetails.first_name));
+        try{
+            req.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+        }catch (Exception e){
+            Timber.i("Test Error = "+ e.getMessage());
+
+            formRegisterUserDetails.setErrorStr(u.toString()
+                    + " Error : " + e.getMessage());
+            return formRegisterUserDetails;
+        }
+
+
+        HttpResponse response;
+        try {
+            Timber.i("Issuing POST request for register new user to: %s", u.toString());
+            response = httpclient.execute(req, localContext);
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            HttpEntity entity = response.getEntity();
+            messageParser = new ResponseMessageRegisterUserParser(entity);
+
+            //if response code = 302 is success sent to server
+
+            if (entity == null) {
+                String error = "Error No entity body returned from: " + u.toString();
+                Timber.e(error);
+
+                formRegisterUserDetails.setErrorStr(error);
+                return formRegisterUserDetails;
+            }
+
+            if(statusCode != HttpStatus.SC_MOVED_TEMPORARILY){
+                if (messageParser.getMessageResponse().contains("Error")) {
+
+                    formRegisterUserDetails.setErrorStr(messageParser.getMessageResponse());
+                    return formRegisterUserDetails;
+                }
+            }
+
+            formRegisterUserDetails.setErrorStr("Success");
+            return formRegisterUserDetails;
+
+        } catch (Exception e) {
+            String cause;
+            Throwable c = e;
+            while (c.getCause() != null) {
+                c = c.getCause();
+            }
+            cause = c.toString();
+            String error = "Error: " + cause + " while accessing "
+                    + u.toString();
+
+            Timber.w(error);
+
+            formRegisterUserDetails.setErrorStr(error);
+            return formRegisterUserDetails;
         }
     }
 }

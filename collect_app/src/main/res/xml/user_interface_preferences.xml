@@ -13,7 +13,7 @@
         android:key="font_size"
         android:title="@string/font_size" />
     <ListPreference
-        android:defaultValue="swipe"
+        android:defaultValue="swipe_buttons"
         android:dialogTitle="@string/navigation"
         android:entries="@array/navigation_entries"
         android:entryValues="@array/navigation_entry_values"

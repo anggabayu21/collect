@@ -8,8 +8,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
+import android.support.design.widget.Snackbar;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -168,53 +171,81 @@ public class OSMWidget extends QuestionWidget implements BinaryWidget {
 
     private void launchOpenMapKit() {
         try {
-            //launch with intent that sends plain text
-            Intent launchIntent = new Intent(Intent.ACTION_SEND);
-            launchIntent.setType(ContentType.TEXT_PLAIN.getMimeType());
 
-            //send form id
-            launchIntent.putExtra("FORM_ID", String.valueOf(formId));
+            if (isAppInstalled("com.gic.openmapkit")) {
+                //launch with intent that sends plain text
+                Intent launchIntent = new Intent(Intent.ACTION_SEND);
+                launchIntent.setType(ContentType.TEXT_PLAIN.getMimeType());
 
-            //send instance id
-            launchIntent.putExtra("INSTANCE_ID", instanceId);
+                //send form id
+                launchIntent.putExtra("FORM_ID", String.valueOf(formId));
 
-            //send instance directory
-            launchIntent.putExtra("INSTANCE_DIR", instanceDirectory);
+                //send instance id
+                launchIntent.putExtra("INSTANCE_ID", instanceId);
 
-            //send form file name
-            launchIntent.putExtra("FORM_FILE_NAME", formFileName);
+                //send instance directory
+                launchIntent.putExtra("INSTANCE_DIR", instanceDirectory);
 
-            //send OSM file name if there was a previous edit
-            if (osmFileName != null) {
-                launchIntent.putExtra("OSM_EDIT_FILE_NAME", osmFileName);
-            }
+                //send form file name
+                launchIntent.putExtra("FORM_FILE_NAME", formFileName);
 
-            //send encode tag data structure to intent
-            writeOsmRequiredTagsToExtras(launchIntent);
-
-            //verify the package resolves before starting activity
-            Context ctx = getContext();
-            PackageManager packageManager = ctx.getPackageManager();
-            List<ResolveInfo> activities = packageManager.queryIntentActivities(launchIntent, 0);
-            boolean isIntentSafe = activities.size() > 0;
-
-            //launch activity if it is safe
-            if (isIntentSafe) {
-                // notify that the form is waiting for data
-                FormController formController = Collect.getInstance().getFormController();
-                if (formController == null) {
-                    Timber.w("FormController is null when trying to call setIndexWaitingForData.");
-                    return;
+                //send OSM file name if there was a previous edit
+                if (osmFileName != null) {
+                    launchIntent.putExtra("OSM_EDIT_FILE_NAME", osmFileName);
                 }
 
-                formController.setIndexWaitingForData(
-                        formEntryPrompt.getIndex());
-                // launch
-                ((Activity) ctx).startActivityForResult(launchIntent,
-                        FormEntryActivity.OSM_CAPTURE);
+                //send encode tag data structure to intent
+                writeOsmRequiredTagsToExtras(launchIntent);
+
+                launchIntent.setClassName("com.gic.openmapkit", "com.gic.openmapkit.MapActivity");
+
+                //verify the package resolves before starting activity
+                Context ctx = getContext();
+                PackageManager packageManager = ctx.getPackageManager();
+                List<ResolveInfo> activities = packageManager.queryIntentActivities(launchIntent, 0);
+                boolean isIntentSafe = activities.size() > 0;
+
+                //launch activity if it is safe
+                if (isIntentSafe) {
+                    // notify that the form is waiting for data
+                    FormController formController = Collect.getInstance().getFormController();
+                    if (formController == null) {
+                        Timber.w("FormController is null when trying to call setIndexWaitingForData.");
+                        return;
+                    }
+
+                    formController.setIndexWaitingForData(
+                            formEntryPrompt.getIndex());
+                    // launch
+                    ((Activity) ctx).startActivityForResult(launchIntent,
+                            FormEntryActivity.OSM_CAPTURE);
+                } else {
+                    errorTextView.setVisibility(VISIBLE);
+                }
             } else {
-                errorTextView.setVisibility(VISIBLE);
+
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle(R.string.alert);
+                builder.setMessage(R.string.install_openmapkit);
+                DialogInterface.OnClickListener okClickListener = new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        String appPackageName = "com.gic.openmapkit";
+                        Context ctx = getContext();
+                        try {
+
+                            ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
+                        } catch (android.content.ActivityNotFoundException anfe) {
+                            ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+                        }
+                    }
+                };
+
+                builder.setPositiveButton("Ok", okClickListener);
+                AlertDialog dialog = builder.create();
+                dialog.show();
             }
+
         } catch (Exception ex) {
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle(R.string.alert);
@@ -311,5 +342,19 @@ public class OSMWidget extends QuestionWidget implements BinaryWidget {
             intent.putStringArrayListExtra("TAG_VALUES." + tag.key, tagValues);
         }
         intent.putStringArrayListExtra("TAG_KEYS", tagKeys);
+    }
+
+    private boolean isAppInstalled(String uri) {
+        Context ctx = getContext();
+        PackageManager pm = ctx.getPackageManager();
+        boolean app_installed;
+        try {
+            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
+            app_installed = true;
+        }
+        catch (PackageManager.NameNotFoundException e) {
+            app_installed = false;
+        }
+        return app_installed;
     }
 }

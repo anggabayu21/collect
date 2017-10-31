@@ -19,11 +19,14 @@ package com.gic.collect.android.utilities;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
+import com.gic.collect.android.activities.InstanceUploaderList;
 import com.gic.collect.android.application.Collect;
 import com.gic.collect.android.preferences.GeneralSharedPreferences;
 import com.gic.collect.android.preferences.PreferenceKeys;
@@ -33,6 +36,8 @@ import com.gic.collect.android.preferences.PreferenceKeys;
  */
 public class AuthDialogUtility {
     private static final String TAG = "AuthDialogUtility";
+
+    private Button registerUserButton;
 
     public AlertDialog createDialog(final Context context,
                                     final AuthDialogUtilityResultListener resultListener) {
@@ -50,10 +55,38 @@ public class AuthDialogUtility {
         builder.setTitle(context.getString(com.gic.collect.android.R.string.server_requires_auth));
         builder.setMessage(context.getString(com.gic.collect.android.R.string.server_auth_credentials, getServer()));
         builder.setView(dialogView);
-        builder.setPositiveButton(context.getString(com.gic.collect.android.R.string.ok), new DialogInterface.OnClickListener() {
+//        builder.setPositiveButton(context.getString(com.gic.collect.android.R.string.ok), new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                Collect.getInstance().getActivityLogger().logAction(this, TAG, "OK");
+//
+//                String userNameValue = username.getText().toString();
+//                String passwordValue = password.getText().toString();
+//
+//                saveCredentials(userNameValue, passwordValue);
+//                setWebCredentialsFromPreferences();
+//
+//                resultListener.updatedCredentials();
+//            }
+//        });
+
+        builder.setNegativeButton(context.getString(com.gic.collect.android.R.string.cancel),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Collect.getInstance().getActivityLogger().logAction(this, TAG, "Cancel");
+
+                        resultListener.cancelledUpdatingCredentials();
+                    }
+                });
+
+        // login button. expects a result.
+        registerUserButton = (Button) dialogView.findViewById(com.gic.collect.android.R.id.login_edit);
+        registerUserButton.setText("Login");
+        registerUserButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Collect.getInstance().getActivityLogger().logAction(this, TAG, "OK");
+            public void onClick(View v) {
+                Collect.getInstance().getActivityLogger().logAction(this, TAG, "Login");
 
                 String userNameValue = username.getText().toString();
                 String passwordValue = password.getText().toString();
@@ -64,15 +97,18 @@ public class AuthDialogUtility {
                 resultListener.updatedCredentials();
             }
         });
-        builder.setNegativeButton(context.getString(com.gic.collect.android.R.string.cancel),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Collect.getInstance().getActivityLogger().logAction(this, TAG, "Cancel");
 
-                        resultListener.cancelledUpdatingCredentials();
-                    }
-                });
+        // register user button. expects a result.
+        registerUserButton = (Button) dialogView.findViewById(com.gic.collect.android.R.id.register_user);
+        registerUserButton.setText("Register");
+        registerUserButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Collect.getInstance().getActivityLogger().logAction(this, TAG, "Register");
+
+                resultListener.registerUser();
+            }
+        });
 
         builder.setCancelable(false);
 
@@ -113,5 +149,7 @@ public class AuthDialogUtility {
         void updatedCredentials();
 
         void cancelledUpdatingCredentials();
+
+        void registerUser();
     }
 }

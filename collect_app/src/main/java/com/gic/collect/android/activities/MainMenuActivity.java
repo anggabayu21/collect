@@ -41,9 +41,12 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.gic.collect.android.dao.FormsDao;
+import com.gic.collect.android.listeners.MenuPageListener;
 import com.gic.collect.android.preferences.AdminPreferencesActivity;
 import com.gic.collect.android.preferences.AutoSendPreferenceMigrator;
 import com.gic.collect.android.preferences.PreferencesActivity;
+import com.gic.collect.android.provider.FormsProviderAPI;
 import com.gic.collect.android.utilities.PlayServicesUtil;
 import com.gic.collect.android.utilities.SharedPreferencesUtils;
 import com.google.android.gms.analytics.GoogleAnalytics;
@@ -94,9 +97,11 @@ public class MainMenuActivity extends AppCompatActivity {
     private int completedCount;
     private int savedCount;
     private int viewSentCount;
+    private int downloadedFormCount;
     private Cursor finalizedCursor;
     private Cursor savedCursor;
     private Cursor viewSentCursor;
+    private Cursor formDownloaded;
     private IncomingHandler handler = new IncomingHandler(this);
     private MyContentObserver contentObserver = new MyContentObserver();
 
@@ -107,6 +112,8 @@ public class MainMenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(com.gic.collect.android.R.layout.main_menu);
         initToolbar();
+
+        Timber.i("Test main menu");
 
         // enter data button. expects a result.
         enterDataButton = (Button) findViewById(com.gic.collect.android.R.id.enter_data);
@@ -306,6 +313,10 @@ public class MainMenuActivity extends AppCompatActivity {
         }
         viewSentCount = viewSentCursor != null ? viewSentCursor.getCount() : 0;
 
+        //count for downloaded form
+        downloadedFormVoid();
+
+
         updateButtons();
         setupGoogleAnalytics();
     }
@@ -316,8 +327,31 @@ public class MainMenuActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
     }
 
+    private void downloadedFormVoid(){
+        //count for downloaded form
+        formDownloaded = new FormsDao().getFormsCursor(FormsProviderAPI.FormsColumns.DISPLAY_NAME + " COLLATE NOCASE ASC");
+        downloadedFormCount = formDownloaded.getCount();
+        if(downloadedFormCount == 0){
+            Timber.i("Test no form downloaded");
+            getFormsButton.callOnClick();
+        }
+        else {
+            Timber.i("Test Has a forms");
+            enterDataButton.callOnClick();
+        }
+        Timber.i( "Test count of downloadedfrom = " + String.valueOf(downloadedFormCount) );
+    }
+
     @Override
     protected void onResume() {
+        Timber.i("Test onResume");
+        Timber.i("Test Active page = "+Collect.getInstance().getPageActive());
+
+        if(!Collect.getInstance().getPageActive().equals("homeButtonPressed")){
+            downloadedFormVoid();
+        }
+        Collect.getInstance().setPageActive("");
+
         super.onResume();
         SharedPreferences sharedPreferences = this.getSharedPreferences(
                 AdminPreferencesActivity.ADMIN_PREFERENCES, 0);

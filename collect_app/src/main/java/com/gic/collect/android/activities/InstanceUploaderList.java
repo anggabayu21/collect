@@ -77,7 +77,6 @@ public class InstanceUploaderList extends InstanceListActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Timber.i("onCreate");
         setContentView(com.gic.collect.android.R.layout.instance_uploader_list);
         super.onCreate(savedInstanceState);
 

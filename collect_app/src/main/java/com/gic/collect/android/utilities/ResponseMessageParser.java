@@ -55,7 +55,6 @@ public class ResponseMessageParser {
             Document doc = null;
 
             String httpEntityString = EntityUtils.toString(httpEntity);
-
             if (httpEntityString.contains("OpenRosaResponse")) {
                 doc = builder.parse(new ByteArrayInputStream(httpEntityString.getBytes()));
                 doc.getDocumentElement().normalize();

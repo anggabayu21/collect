@@ -37,14 +37,17 @@ import android.widget.SimpleAdapter;
 import com.gic.collect.android.dao.FormsDao;
 import com.gic.collect.android.listeners.FormListDownloaderListener;
 import com.gic.collect.android.logic.FormDetails;
+import com.gic.collect.android.logic.FormRegisterUserDetails;
 import com.gic.collect.android.preferences.PreferencesActivity;
 import com.gic.collect.android.provider.FormsProviderAPI;
 import com.gic.collect.android.listeners.FormDownloaderListener;
+import com.gic.collect.android.utilities.RegisterUserDialogUtility;
 import com.gic.collect.android.utilities.ToastUtils;
 import com.gic.collect.android.R;
 import com.gic.collect.android.application.Collect;
 import com.gic.collect.android.tasks.DownloadFormListTask;
 import com.gic.collect.android.tasks.DownloadFormsTask;
+import com.gic.collect.android.tasks.RegisterUserTask;
 import com.gic.collect.android.utilities.AuthDialogUtility;
 
 import java.util.ArrayList;
@@ -73,11 +76,12 @@ import timber.log.Timber;
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class FormDownloadList extends FormListActivity implements FormListDownloaderListener,
-        FormDownloaderListener, AuthDialogUtility.AuthDialogUtilityResultListener, AdapterView.OnItemClickListener {
+        FormDownloaderListener, AuthDialogUtility.AuthDialogUtilityResultListener, RegisterUserDialogUtility.RegisterUserDialogUtilityListener, RegisterUserTask.RegisterUserListener, AdapterView.OnItemClickListener {
     private static final String FORM_DOWNLOAD_LIST_SORTING_ORDER = "formDownloadListSortingOrder";
 
     private static final int PROGRESS_DIALOG = 1;
     private static final int AUTH_DIALOG = 2;
+    private static final int REGISTER_USER_DIALOG = 3;
     private static final int MENU_PREFERENCES = Menu.FIRST;
 
     private static final String BUNDLE_SELECTED_COUNT = "selectedcount";
@@ -105,6 +109,7 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
 
     private DownloadFormListTask downloadFormListTask;
     private DownloadFormsTask downloadFormsTask;
+    private RegisterUserTask registerUserTask;
     private Button toggleButton;
 
     private HashMap<String, FormDetails> formNamesAndURLs = new HashMap<String, FormDetails>();
@@ -160,7 +165,6 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
             @Override
             public void onClick(View v) {
                 Collect.getInstance().getActivityLogger().logAction(this, "refreshForms", "");
-
                 downloadFormList();
                 filteredFormList.clear();
                 clearChoices();
@@ -229,10 +233,23 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
                 }
                 downloadFormsTask = null;
             }
-        } else if (formNamesAndURLs.isEmpty() && getLastNonConfigurationInstance() == null) {
+        } else if (getLastNonConfigurationInstance() instanceof RegisterUserTask) {
+            registerUserTask = (RegisterUserTask) getLastNonConfigurationInstance();
+            if (registerUserTask.getStatus() == AsyncTask.Status.FINISHED) {
+                try {
+                    dismissDialog(PROGRESS_DIALOG);
+                } catch (IllegalArgumentException e) {
+                    Timber.i("Attempting to close a dialog that was not previously opened");
+                }
+                registerUserTask = null;
+            }
+        }
+        else if (formNamesAndURLs.isEmpty() && getLastNonConfigurationInstance() == null) {
             // first time, so get the formlist
             downloadFormList();
         }
+
+
 
         String[] data = new String[]{
                 FORMNAME, FORMID_DISPLAY, FORMDETAIL_KEY
@@ -330,6 +347,43 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
         }
     }
 
+    /**
+     * Starts the send registration form and shows the progress dialog.
+     */
+    private void sendRegisterUserFormActivity(FormRegisterUserDetails formRegisterUserDetails) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
+
+        Timber.i("Test get called from the utility");
+
+        if (ni == null || !ni.isConnected()) {
+            ToastUtils.showShortToast(R.string.no_connection);
+        } else {
+
+            if (progressDialog != null) {
+                // This is needed because onPrepareDialog() is broken in 1.6.
+                progressDialog.setMessage(getString(R.string.please_wait));
+            }
+            showDialog(PROGRESS_DIALOG);
+
+            if (registerUserTask != null
+                    && registerUserTask.getStatus() != AsyncTask.Status.FINISHED) {
+                return; // we are already doing the download!!!
+            } else if (registerUserTask != null) {
+                registerUserTask.setRegisterUserListener(null);
+                registerUserTask.cancel(true);
+                registerUserTask = null;
+            }
+
+            registerUserTask = new RegisterUserTask();
+            registerUserTask.setFormRegisterUserDetails(formRegisterUserDetails);
+            registerUserTask.setRegisterUserListener(this);
+            registerUserTask.execute();
+
+        }
+    }
+
 
     @Override
     protected void onRestoreInstanceState(Bundle state) {
@@ -419,6 +473,14 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
                 alertShowing = false;
 
                 return new AuthDialogUtility().createDialog(this, this);
+
+            case REGISTER_USER_DIALOG:
+                Collect.getInstance().getActivityLogger().logAction(this,
+                        "onCreateDialog.REGISTER_USER_DIALOG", "show");
+
+                alertShowing = false;
+
+                return new RegisterUserDialogUtility().createDialog(this,this);
         }
         return null;
     }
@@ -690,6 +752,34 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
         }
     }
 
+    public void registerUserComplete(FormRegisterUserDetails result) {
+        dismissDialog(PROGRESS_DIALOG);
+        registerUserTask.setRegisterUserListener(null);
+        registerUserTask = null;
+
+        if (result == null) {
+            Timber.e("Register use returned null.  That shouldn't happen");
+            // Just displayes "error occured" to the user, but this should never happen.
+            createAlertDialog(getString(R.string.load_remote_form_error),
+                    getString(R.string.error_occured), EXIT);
+            return;
+        }
+
+        if (result.errorStr.contains("Error")) {
+            // Download failed
+            String dialogMessage = result.errorStr;
+            String dialogTitle = "Input Error";
+            showDialog(REGISTER_USER_DIALOG);
+            createAlertDialog(dialogTitle, dialogMessage, DO_NOT_EXIT);
+        }
+        else if (result.errorStr.contains("Success")) {
+            // Download failed
+            String dialogMessage = "Success Register a new user, please check your email for confirmation!";
+            String dialogTitle = "Succes";
+            createAlertDialog(dialogTitle, dialogMessage, EXIT);
+        }
+    }
+
 
     /**
      * Creates an alert dialog with the given tite and message. If shouldExit is set to true, the
@@ -761,11 +851,30 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
 
     @Override
     public void updatedCredentials() {
+        dismissDialog(AUTH_DIALOG);
         downloadFormList();
     }
 
     @Override
     public void cancelledUpdatingCredentials() {
+        finish();
+    }
+
+    @Override
+    public void registerUser() {
+        dismissDialog(AUTH_DIALOG);
+        showDialog(REGISTER_USER_DIALOG);
+    }
+
+    /* From RegisterUserDialogUtility */
+    @Override
+    public void sendRegisterUserForm(FormRegisterUserDetails formRegisterUserDetails) {
+        Timber.i("Test call it inside activity");
+        sendRegisterUserFormActivity(formRegisterUserDetails);
+    }
+
+    @Override
+    public void cancelledRegisterUser() {
         finish();
     }
 }
