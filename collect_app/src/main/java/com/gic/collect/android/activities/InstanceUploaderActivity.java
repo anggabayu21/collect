@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import com.gic.collect.android.logic.FormRegisterUserDetails;
+import com.gic.collect.android.logic.FormResetPasswordDetails;
 import com.gic.collect.android.tasks.InstanceServerUploader;
 import com.gic.collect.android.R;
 import com.gic.collect.android.application.Collect;
@@ -36,9 +37,11 @@ import com.gic.collect.android.dao.InstancesDao;
 import com.gic.collect.android.listeners.InstanceUploaderListener;
 import com.gic.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import com.gic.collect.android.tasks.RegisterUserTask;
+import com.gic.collect.android.tasks.ResetPasswordTask;
 import com.gic.collect.android.utilities.ApplicationConstants;
 import com.gic.collect.android.utilities.AuthDialogUtility;
 import com.gic.collect.android.utilities.RegisterUserDialogUtility;
+import com.gic.collect.android.utilities.ResetPasswordDialogUtility;
 import com.gic.collect.android.utilities.ToastUtils;
 
 import java.util.ArrayList;
@@ -55,10 +58,11 @@ import timber.log.Timber;
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class InstanceUploaderActivity extends AppCompatActivity implements InstanceUploaderListener,
-        AuthDialogUtility.AuthDialogUtilityResultListener, RegisterUserDialogUtility.RegisterUserDialogUtilityListener, RegisterUserTask.RegisterUserListener {
+        AuthDialogUtility.AuthDialogUtilityResultListener, RegisterUserDialogUtility.RegisterUserDialogUtilityListener, RegisterUserTask.RegisterUserListener, ResetPasswordDialogUtility.ResetPasswordDialogUtilityListener,ResetPasswordTask.ResetPasswordListener {
     private static final int PROGRESS_DIALOG = 1;
     private static final int AUTH_DIALOG = 2;
     private static final int REGISTER_USER_DIALOG = 3;
+    private static final int RESET_PASSWORD_DIALOG = 4;
 
     private static final String AUTH_URI = "auth";
     private static final String ALERT_MSG = "alertmsg";
@@ -73,6 +77,7 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
 
     private InstanceServerUploader instanceServerUploader;
     private RegisterUserTask registerUserTask;
+    private ResetPasswordTask resetPasswordTask;
 
     // maintain a list of what we've yet to send, in case we're interrupted by auth requests
     private Long[] instancesToSend;
@@ -329,6 +334,43 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
         }
     }
 
+    /**
+     * Starts the send reset password form and shows the progress dialog.
+     */
+    private void sendResetPasswordFormActivity(FormResetPasswordDetails formResetPasswordDetails) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
+
+        Timber.i("Test get called from the utility");
+
+        if (ni == null || !ni.isConnected()) {
+            ToastUtils.showShortToast(R.string.no_connection);
+        } else {
+
+            if (progressDialog != null) {
+                // This is needed because onPrepareDialog() is broken in 1.6.
+                progressDialog.setMessage(getString(R.string.please_wait));
+            }
+            showDialog(PROGRESS_DIALOG);
+
+            if (resetPasswordTask != null
+                    && resetPasswordTask.getStatus() != AsyncTask.Status.FINISHED) {
+                return; // we are already doing the download!!!
+            } else if (resetPasswordTask != null) {
+                resetPasswordTask.setResetPasswordListener(null);
+                resetPasswordTask.cancel(true);
+                resetPasswordTask = null;
+            }
+
+            resetPasswordTask = new ResetPasswordTask();
+            resetPasswordTask.setFormResetPasswordDetails(formResetPasswordDetails);
+            resetPasswordTask.setResetPasswordListener(this);
+            resetPasswordTask.execute();
+
+        }
+    }
+
     @Override
     public void progressUpdate(int progress, int total) {
         alertMsg = getString(R.string.sending_items, String.valueOf(progress), String.valueOf(total));
@@ -377,6 +419,13 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
                 alertShowing = false;
 
                 return new RegisterUserDialogUtility().createDialog(this,this);
+            case RESET_PASSWORD_DIALOG:
+                Collect.getInstance().getActivityLogger().logAction(this,
+                        "onCreateDialog.RESET_PASSWORD_DIALOG", "show");
+
+                alertShowing = false;
+
+                return new ResetPasswordDialogUtility().createDialog(this,this);
         }
 
         return null;
@@ -478,6 +527,33 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
 
     }
 
+    public void resetPasswordComplete(FormResetPasswordDetails result) {
+        dismissDialog(PROGRESS_DIALOG);
+        resetPasswordTask.setResetPasswordListener(null);
+        resetPasswordTask = null;
+
+        if (result == null) {
+            Timber.e("Register use returned null.  That shouldn't happen");
+            // Just displayes "error occured" to the user, but this should never happen.
+            createAlertDialog(getString(R.string.error_occured), true);
+            return;
+        }
+
+        if (result.errorStr.contains("Error")) {
+            // Download failed
+            String dialogMessage = result.errorStr;
+            String dialogTitle = "Input Error";
+            showDialog(RESET_PASSWORD_DIALOG);
+            createAlertDialog(dialogMessage, false);
+        }
+        else if (result.errorStr.contains("Success")) {
+            // Download failed
+            String dialogMessage = "Success Reset a password, please check your email!";
+            String dialogTitle = "Succes";
+            createAlertDialog(dialogMessage, true);
+        }
+    }
+
     @Override
     public void updatedCredentials() {
         showDialog(PROGRESS_DIALOG);
@@ -500,6 +576,12 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
         showDialog(REGISTER_USER_DIALOG);
     }
 
+    @Override
+    public void resetPassword() {
+        dismissDialog(AUTH_DIALOG);
+        showDialog(RESET_PASSWORD_DIALOG);
+    }
+
     /* From RegisterUserDialogUtility */
     @Override
     public void sendRegisterUserForm(FormRegisterUserDetails formRegisterUserDetails) {
@@ -507,8 +589,20 @@ public class InstanceUploaderActivity extends AppCompatActivity implements Insta
         sendRegisterUserFormActivity(formRegisterUserDetails);
     }
 
+    /* From ResetPasswordDialogUtility */
+    @Override
+    public void sendResetPasswordForm(FormResetPasswordDetails formResetPasswordDetails) {
+        Timber.i("Test call it inside activity");
+        sendResetPasswordFormActivity(formResetPasswordDetails);
+    }
+
     @Override
     public void cancelledRegisterUser() {
+        finish();
+    }
+
+    @Override
+    public void cancelledResetPassword() {
         finish();
     }
 }

@@ -27,6 +27,7 @@ import org.kxml2.kdom.Document;
 import com.gic.collect.android.R;
 import com.gic.collect.android.application.Collect;
 import com.gic.collect.android.logic.FormRegisterUserDetails;
+import com.gic.collect.android.logic.FormResetPasswordDetails;
 import com.gic.collect.android.preferences.PreferenceKeys;
 
 import org.opendatakit.httpclientandroidlib.Header;
@@ -700,6 +701,209 @@ public final class WebUtils {
 
             formRegisterUserDetails.setErrorStr(error);
             return formRegisterUserDetails;
+        }
+    }
+
+    public static FormResetPasswordDetails sendResetPasswordToServer(FormResetPasswordDetails formResetPasswordDetails, String urlString,
+                                                                   HttpContext localContext, HttpClient httpclient) {
+        Uri u = Uri.parse(urlString);
+        Timber.i("TEST url = "+urlString);
+        ResponseMessageRegisterUserParser messageParser = null;
+        Map<Uri, Uri> uriRemap = new HashMap<Uri, Uri>();
+        boolean openRosaServer = false;
+        if (uriRemap.containsKey(u)) {
+            // we already issued a head request and got a response,
+            // so we know the proper URL to send the submission to
+            // and the proper scheme. We also know that it was an
+            // OpenRosa compliant server.
+            openRosaServer = true;
+            u = uriRemap.get(u);
+
+            // if https then enable preemptive basic auth...
+            if (u.getScheme().equals("https")) {
+                WebUtils.enablePreemptiveBasicAuth(localContext, u.getHost());
+            }
+
+            Timber.i("Using Uri remap for reset password. Now: %s", u.toString());
+        } else {
+            if (u.getHost() == null) {
+                Timber.i("Host name may not be null");
+
+                formResetPasswordDetails.setErrorStr("Error Host name may not be null");
+                return formResetPasswordDetails;
+            }
+
+            // if https then enable preemptive basic auth...
+            if (u.getScheme() != null && u.getScheme().equals("https")) {
+                WebUtils.enablePreemptiveBasicAuth(localContext, u.getHost());
+            }
+
+            // we need to issue a head request
+            HttpHead httpHead = WebUtils.createOpenRosaHttpHead(u);
+
+            // prepare response
+            HttpResponse response = null;
+            try {
+                Timber.i("Issuing HEAD request for reset password to: %s", u.toString());
+
+                response = httpclient.execute(httpHead, localContext);
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                    // clear the cookies -- should not be necessary?
+                    Collect.getInstance().getCookieStore().clear();
+
+                    WebUtils.discardEntityBytes(response);
+
+                    formResetPasswordDetails.setErrorStr("Error false");
+                    return formResetPasswordDetails;
+                } else if (statusCode == 204) {
+                    Header[] locations = response.getHeaders("Location");
+                    WebUtils.discardEntityBytes(response);
+                    if (locations != null && locations.length == 1) {
+                        try {
+                            Uri newURI = Uri.parse(
+                                    URLDecoder.decode(locations[0].getValue(), "utf-8"));
+                            if (u.getHost().equalsIgnoreCase(newURI.getHost())) {
+                                openRosaServer = true;
+                                // trust the server to tell us a new location
+                                // ... and possibly to use https instead.
+                                uriRemap.put(u, newURI);
+                                u = newURI;
+                            } else {
+
+                                formResetPasswordDetails.setErrorStr("Error true");
+                                return formResetPasswordDetails;
+                            }
+                        } catch (Exception e) {
+                            Timber.e(e, "Exception thrown parsing URI for url %s", urlString);
+
+                            formResetPasswordDetails.setErrorStr("Error true");
+                            return formResetPasswordDetails;
+                        }
+                    }
+                } else {
+                    // may be a server that does not handle
+                    WebUtils.discardEntityBytes(response);
+
+                    Timber.w("Status code on Head request: %d", statusCode);
+                    Timber.i("Test cookie = "+Collect.getInstance().getCookieStore()); //Test cookie = [[version: 0][name: csrftoken][value: GWvW6oKldupachgGE4I6Atw38cfg5FKQhub5fr72yodyKodZezX5pXpFuUmIB55S][domain: gicdata.ddns.net][path: /][expiry: Mon Oct 29 17:38:12 GMT+07:00 2018]]
+
+                }
+            } catch (ClientProtocolException | ConnectTimeoutException | UnknownHostException | SocketTimeoutException | NoHttpResponseException | SocketException e) {
+                if (e instanceof ClientProtocolException) {
+
+                    Timber.i(e, "Client Protocol Exception");
+                } else if (e instanceof ConnectTimeoutException) {
+
+                    Timber.i(e, "Connection Timeout");
+                } else if (e instanceof UnknownHostException) {
+
+                    Timber.i(e, "Network Connection Failed");
+                } else if (e instanceof SocketTimeoutException) {
+
+                    Timber.i(e, "Connection timeout");
+                } else {
+
+                    Timber.i(e, "Network Connection Refused");
+                }
+
+                formResetPasswordDetails.setErrorStr("Error true");
+                return formResetPasswordDetails;
+            } catch (Exception e) {
+                String msg = e.getMessage();
+                if (msg == null) {
+                    msg = e.toString();
+                }
+
+                Timber.e(e);
+                formResetPasswordDetails.setErrorStr("Error true");
+                return formResetPasswordDetails;
+            }
+        }
+
+        HttpPost req = WebUtils.createOpenRosaHttpPost(u);
+        // Add data
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+
+        CookieStore cookieStore = Collect.getInstance().getCookieStore();
+        List<Cookie> cookieList = cookieStore.getCookies();
+        String csrfValue = "";
+        for (Cookie cookie : cookieList) {
+            try {
+                Timber.i("Test cookie domain = "+ cookie.getDomain() );
+                Timber.i("Test cookie name = "+ cookie.getName() );
+                Timber.i("Test cookie value = "+ cookie.getValue() );
+
+                if(cookie.getName().equals("csrftoken")){
+                    csrfValue = cookie.getValue();
+                }
+
+            } catch (Exception ex) {
+                Timber.i("Cookie rejected: \""
+                        + cookie + "\". " + ex.getMessage());
+            }
+        }
+
+        Timber.i("Test csrf = "+csrfValue);
+        formResetPasswordDetails.csrf = csrfValue;
+        nameValuePairs.add(new BasicNameValuePair("csrfmiddlewaretoken", csrfValue));
+        nameValuePairs.add(new BasicNameValuePair("email", formResetPasswordDetails.email));
+
+        try{
+            req.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+        }catch (Exception e){
+            Timber.i("Test Error = "+ e.getMessage());
+
+            formResetPasswordDetails.setErrorStr(u.toString()
+                    + " Error : " + e.getMessage());
+            return formResetPasswordDetails;
+        }
+
+
+        HttpResponse response;
+        try {
+            Timber.i("Issuing POST request for register new user to: %s", u.toString());
+            response = httpclient.execute(req, localContext);
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            HttpEntity entity = response.getEntity();
+            messageParser = new ResponseMessageRegisterUserParser(entity);
+
+            //if response code = 302 is success sent to server
+
+            if (entity == null) {
+                String error = "Error No entity body returned from: " + u.toString();
+                Timber.e(error);
+
+                formResetPasswordDetails.setErrorStr(error);
+                return formResetPasswordDetails;
+            }
+
+            if(statusCode != HttpStatus.SC_MOVED_TEMPORARILY){
+                if (messageParser.getMessageResponse().contains("Error")) {
+
+                    formResetPasswordDetails.setErrorStr(messageParser.getMessageResponse());
+                    return formResetPasswordDetails;
+                }
+            }
+
+            formResetPasswordDetails.setErrorStr("Success");
+            return formResetPasswordDetails;
+
+        } catch (Exception e) {
+            String cause;
+            Throwable c = e;
+            while (c.getCause() != null) {
+                c = c.getCause();
+            }
+            cause = c.toString();
+            String error = "Error: " + cause + " while accessing "
+                    + u.toString();
+
+            Timber.w(error);
+
+            formResetPasswordDetails.setErrorStr(error);
+            return formResetPasswordDetails;
         }
     }
 }

@@ -38,16 +38,19 @@ import com.gic.collect.android.dao.FormsDao;
 import com.gic.collect.android.listeners.FormListDownloaderListener;
 import com.gic.collect.android.logic.FormDetails;
 import com.gic.collect.android.logic.FormRegisterUserDetails;
+import com.gic.collect.android.logic.FormResetPasswordDetails;
 import com.gic.collect.android.preferences.PreferencesActivity;
 import com.gic.collect.android.provider.FormsProviderAPI;
 import com.gic.collect.android.listeners.FormDownloaderListener;
 import com.gic.collect.android.utilities.RegisterUserDialogUtility;
+import com.gic.collect.android.utilities.ResetPasswordDialogUtility;
 import com.gic.collect.android.utilities.ToastUtils;
 import com.gic.collect.android.R;
 import com.gic.collect.android.application.Collect;
 import com.gic.collect.android.tasks.DownloadFormListTask;
 import com.gic.collect.android.tasks.DownloadFormsTask;
 import com.gic.collect.android.tasks.RegisterUserTask;
+import com.gic.collect.android.tasks.ResetPasswordTask;
 import com.gic.collect.android.utilities.AuthDialogUtility;
 
 import java.util.ArrayList;
@@ -76,12 +79,13 @@ import timber.log.Timber;
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class FormDownloadList extends FormListActivity implements FormListDownloaderListener,
-        FormDownloaderListener, AuthDialogUtility.AuthDialogUtilityResultListener, RegisterUserDialogUtility.RegisterUserDialogUtilityListener, RegisterUserTask.RegisterUserListener, AdapterView.OnItemClickListener {
+        FormDownloaderListener, AuthDialogUtility.AuthDialogUtilityResultListener, RegisterUserDialogUtility.RegisterUserDialogUtilityListener, RegisterUserTask.RegisterUserListener, ResetPasswordDialogUtility.ResetPasswordDialogUtilityListener,ResetPasswordTask.ResetPasswordListener, AdapterView.OnItemClickListener {
     private static final String FORM_DOWNLOAD_LIST_SORTING_ORDER = "formDownloadListSortingOrder";
 
     private static final int PROGRESS_DIALOG = 1;
     private static final int AUTH_DIALOG = 2;
     private static final int REGISTER_USER_DIALOG = 3;
+    private static final int RESET_PASSWORD_DIALOG = 4;
     private static final int MENU_PREFERENCES = Menu.FIRST;
 
     private static final String BUNDLE_SELECTED_COUNT = "selectedcount";
@@ -110,6 +114,7 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
     private DownloadFormListTask downloadFormListTask;
     private DownloadFormsTask downloadFormsTask;
     private RegisterUserTask registerUserTask;
+    private ResetPasswordTask resetPasswordTask;
     private Button toggleButton;
 
     private HashMap<String, FormDetails> formNamesAndURLs = new HashMap<String, FormDetails>();
@@ -242,6 +247,17 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
                     Timber.i("Attempting to close a dialog that was not previously opened");
                 }
                 registerUserTask = null;
+            }
+        }
+        else if (getLastNonConfigurationInstance() instanceof ResetPasswordTask) {
+            resetPasswordTask = (ResetPasswordTask) getLastNonConfigurationInstance();
+            if (resetPasswordTask.getStatus() == AsyncTask.Status.FINISHED) {
+                try {
+                    dismissDialog(PROGRESS_DIALOG);
+                } catch (IllegalArgumentException e) {
+                    Timber.i("Attempting to close a dialog that was not previously opened");
+                }
+                resetPasswordTask = null;
             }
         }
         else if (formNamesAndURLs.isEmpty() && getLastNonConfigurationInstance() == null) {
@@ -384,6 +400,42 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
         }
     }
 
+    /**
+     * Starts the send reset password form and shows the progress dialog.
+     */
+    private void sendResetPasswordFormActivity(FormResetPasswordDetails formResetPasswordDetails) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo ni = connectivityManager.getActiveNetworkInfo();
+
+        Timber.i("Test get called from the utility");
+
+        if (ni == null || !ni.isConnected()) {
+            ToastUtils.showShortToast(R.string.no_connection);
+        } else {
+
+            if (progressDialog != null) {
+                // This is needed because onPrepareDialog() is broken in 1.6.
+                progressDialog.setMessage(getString(R.string.please_wait));
+            }
+            showDialog(PROGRESS_DIALOG);
+
+            if (resetPasswordTask != null
+                    && resetPasswordTask.getStatus() != AsyncTask.Status.FINISHED) {
+                return; // we are already doing the download!!!
+            } else if (resetPasswordTask != null) {
+                resetPasswordTask.setResetPasswordListener(null);
+                resetPasswordTask.cancel(true);
+                resetPasswordTask = null;
+            }
+
+            resetPasswordTask = new ResetPasswordTask();
+            resetPasswordTask.setFormResetPasswordDetails(formResetPasswordDetails);
+            resetPasswordTask.setResetPasswordListener(this);
+            resetPasswordTask.execute();
+
+        }
+    }
 
     @Override
     protected void onRestoreInstanceState(Bundle state) {
@@ -481,6 +533,14 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
                 alertShowing = false;
 
                 return new RegisterUserDialogUtility().createDialog(this,this);
+
+            case RESET_PASSWORD_DIALOG:
+                Collect.getInstance().getActivityLogger().logAction(this,
+                        "onCreateDialog.RESET_PASSWORD_DIALOG", "show");
+
+                alertShowing = false;
+
+                return new ResetPasswordDialogUtility().createDialog(this,this);
         }
         return null;
     }
@@ -780,6 +840,34 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
         }
     }
 
+    public void resetPasswordComplete(FormResetPasswordDetails result) {
+        dismissDialog(PROGRESS_DIALOG);
+        resetPasswordTask.setResetPasswordListener(null);
+        resetPasswordTask = null;
+
+        if (result == null) {
+            Timber.e("Register use returned null.  That shouldn't happen");
+            // Just displayes "error occured" to the user, but this should never happen.
+            createAlertDialog(getString(R.string.load_remote_form_error),
+                    getString(R.string.error_occured), EXIT);
+            return;
+        }
+
+        if (result.errorStr.contains("Error")) {
+            // Download failed
+            String dialogMessage = result.errorStr;
+            String dialogTitle = "Input Error";
+            showDialog(RESET_PASSWORD_DIALOG);
+            createAlertDialog(dialogTitle, dialogMessage, DO_NOT_EXIT);
+        }
+        else if (result.errorStr.contains("Success")) {
+            // Download failed
+            String dialogMessage = "Success Reset a password, please check your email!";
+            String dialogTitle = "Succes";
+            createAlertDialog(dialogTitle, dialogMessage, EXIT);
+        }
+    }
+
 
     /**
      * Creates an alert dialog with the given tite and message. If shouldExit is set to true, the
@@ -866,6 +954,12 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
         showDialog(REGISTER_USER_DIALOG);
     }
 
+    @Override
+    public void resetPassword() {
+        dismissDialog(AUTH_DIALOG);
+        showDialog(RESET_PASSWORD_DIALOG);
+    }
+
     /* From RegisterUserDialogUtility */
     @Override
     public void sendRegisterUserForm(FormRegisterUserDetails formRegisterUserDetails) {
@@ -873,8 +967,20 @@ public class FormDownloadList extends FormListActivity implements FormListDownlo
         sendRegisterUserFormActivity(formRegisterUserDetails);
     }
 
+    /* From ResetPasswordDialogUtility */
+    @Override
+    public void sendResetPasswordForm(FormResetPasswordDetails formResetPasswordDetails) {
+        Timber.i("Test call it inside activity");
+        sendResetPasswordFormActivity(formResetPasswordDetails);
+    }
+
     @Override
     public void cancelledRegisterUser() {
+        finish();
+    }
+
+    @Override
+    public void cancelledResetPassword() {
         finish();
     }
 }

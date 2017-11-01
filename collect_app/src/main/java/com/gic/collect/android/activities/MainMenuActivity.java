@@ -313,10 +313,6 @@ public class MainMenuActivity extends AppCompatActivity {
         }
         viewSentCount = viewSentCursor != null ? viewSentCursor.getCount() : 0;
 
-        //count for downloaded form
-        downloadedFormVoid();
-
-
         updateButtons();
         setupGoogleAnalytics();
     }
@@ -443,12 +439,14 @@ public class MainMenuActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
+        Timber.i("Test onStart");
         super.onStart();
         Collect.getInstance().getActivityLogger().logOnStart(this);
     }
 
     @Override
     protected void onStop() {
+        Timber.i("Test onStop");
         Collect.getInstance().getActivityLogger().logOnStop(this);
         super.onStop();
     }

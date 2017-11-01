@@ -14,6 +14,7 @@ the License.
 -->
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <!-- Toolbar -->
@@ -32,9 +33,36 @@ the License.
         android:id="@+id/questionholder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/buttonholder"
+        android:layout_above="@+id/msgholder"
         android:layout_below="@id/toolbar"
         android:orientation="horizontal"/>
+
+    <LinearLayout
+        android:id="@+id/msgholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonholder"
+        android:orientation="horizontal"
+        android:paddingBottom="0dip"
+        android:paddingEnd="4dip"
+        android:paddingLeft="4dip"
+        android:paddingRight="4dip"
+        android:paddingStart="4dip"
+        android:paddingTop="4dip">
+
+        <TextView
+            android:id="@+id/msg_text"
+            android:drawableLeft="@drawable/ic_access_time_black_24dp"
+            android:drawablePadding="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dip"
+            android:layout_marginRight="20dip"
+            android:gravity="start"
+            android:text=""
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@android:color/black" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/buttonholder"

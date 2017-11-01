@@ -37,7 +37,9 @@ import com.gic.collect.android.preferences.PreferenceKeys;
 public class AuthDialogUtility {
     private static final String TAG = "AuthDialogUtility";
 
+    private Button loginButton;
     private Button registerUserButton;
+    private Button resetPasswordButton;
 
     public AlertDialog createDialog(final Context context,
                                     final AuthDialogUtilityResultListener resultListener) {
@@ -81,9 +83,9 @@ public class AuthDialogUtility {
                 });
 
         // login button. expects a result.
-        registerUserButton = (Button) dialogView.findViewById(com.gic.collect.android.R.id.login_edit);
-        registerUserButton.setText("Login");
-        registerUserButton.setOnClickListener(new View.OnClickListener() {
+        loginButton = (Button) dialogView.findViewById(com.gic.collect.android.R.id.login_edit);
+        loginButton.setText("Login");
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Collect.getInstance().getActivityLogger().logAction(this, TAG, "Login");
@@ -109,6 +111,19 @@ public class AuthDialogUtility {
                 resultListener.registerUser();
             }
         });
+
+        // reset password button. expects a result.
+        resetPasswordButton = (Button) dialogView.findViewById(com.gic.collect.android.R.id.reset_password);
+        resetPasswordButton.setText("Forget Password?");
+        resetPasswordButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Collect.getInstance().getActivityLogger().logAction(this, TAG, "Reset");
+
+                resultListener.resetPassword();
+            }
+        });
+
 
         builder.setCancelable(false);
 
@@ -151,5 +166,7 @@ public class AuthDialogUtility {
         void cancelledUpdatingCredentials();
 
         void registerUser();
+
+        void resetPassword();
     }
 }

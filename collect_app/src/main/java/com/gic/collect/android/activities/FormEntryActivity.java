@@ -238,6 +238,7 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
 
     private ImageButton nextButton;
     private ImageButton backButton;
+    private TextView msgText;
 
     private String stepMessage = "";
     private Toolbar toolbar;
@@ -301,6 +302,10 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
                 showPreviousView();
             }
         });
+
+        msgText = (TextView) findViewById(R.id.msg_text);
+        msgText.setText("");
+        msgText.setVisibility(View.GONE);
 
         String startingXPath = null;
         String waitingXPath = null;

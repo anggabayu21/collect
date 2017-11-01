@@ -16,7 +16,7 @@ package com.gic.collect.android.logic;
 
 import java.io.Serializable;
 
-public class FormRegisterUserDetails implements Serializable {
+public class FormResetPasswordDetails implements Serializable {
     /**
      *
      */
@@ -25,40 +25,24 @@ public class FormRegisterUserDetails implements Serializable {
     public String errorStr;
 
     public String csrf;
-    public String username;
     public String email;
-    public String password1;
-    public String password2;
-    public String first_name;
 
 
-    public FormRegisterUserDetails() {
+    public FormResetPasswordDetails() {
         this.csrf = null;
-        this.username = null;
         this.email = null;
-        this.password1 = null;
-        this.password2 = null;
-        this.first_name = null;
         this.errorStr = null;
     }
 
-    public FormRegisterUserDetails(String error) {
+    public FormResetPasswordDetails(String error) {
         this.csrf = null;
-        this.username = null;
         this.email = null;
-        this.password1 = null;
-        this.password2 = null;
-        this.first_name = null;
         this.errorStr = error;
     }
 
-    public FormRegisterUserDetails(String csrf, String username, String email, String password1, String password2, String first_name) {
+    public FormResetPasswordDetails(String csrf, String email) {
         this.csrf = csrf;
-        this.username = username;
         this.email = email;
-        this.password1 = password1;
-        this.password2 = password2;
-        this.first_name = first_name;
         this.errorStr = null;
     }
 
