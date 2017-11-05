@@ -52,7 +52,7 @@
     <string name="delete_yes">Delete Forms</string>
     <string name="discard_answer">Remove response</string>
     <string name="discard_group">Remove group</string>
-    <string name="download">Get Selected</string>
+    <string name="download">Download</string>
     <string name="download_forms_result">Download Result</string>
     <string name="downloading_data">Connecting to Server</string>
     <string name="do_not_change">Cancel</string>
@@ -438,6 +438,11 @@
     <string name="sort_by_status_desc">Status, unfinalized first</string>
     <string name="sort_the_list">Sort the list</string>
     <string name="home">Home</string>
+
+    <string name="menu_collect">Collect</string>
+    <string name="menu_download">Download</string>
+    <string name="menu_upload">Upload</string>
+
     <string name="request_permissions_google_account">ODK Collect needs access to your Google account to get blank forms and submit filled forms.</string>
     <string name="filter_the_list">Filter the list</string>
     <string name="language">Language</string>

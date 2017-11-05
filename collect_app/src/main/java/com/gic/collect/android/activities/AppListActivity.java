@@ -17,6 +17,7 @@
 package com.gic.collect.android.activities;
 
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -176,6 +177,26 @@ abstract class AppListActivity extends AppCompatActivity {
         final MenuItem sortItem = menu.findItem(R.id.menu_sort);
         final MenuItem searchItem = menu.findItem(R.id.menu_filter);
         final MenuItem homeItem = menu.findItem(R.id.menu_home);
+        final MenuItem downloadItem = menu.findItem(R.id.menu_download);
+        final MenuItem uploadItem = menu.findItem(R.id.menu_upload);
+        final MenuItem collectItem = menu.findItem(R.id.menu_collect);
+
+        if(getTitle().equals(getString(R.string.enter_data))  ){ //collect page
+            collectItem.setVisible(false);
+            uploadItem.setVisible(true);
+            downloadItem.setVisible(true);
+        }
+        else if(getTitle().equals(getString(R.string.get_forms))  ){ //download page
+            collectItem.setVisible(true);
+            uploadItem.setVisible(true);
+            downloadItem.setVisible(false);
+        }
+        else if(getTitle().equals(getString(R.string.send_data))  ){ //upload page
+            collectItem.setVisible(true);
+            uploadItem.setVisible(false);
+            downloadItem.setVisible(true);
+        }
+
         searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setQueryHint(getResources().getString(R.string.search));
         searchView.setMaxWidth(Integer.MAX_VALUE);
@@ -220,6 +241,7 @@ abstract class AppListActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        String menuPage;
         switch (item.getItemId()) {
             case R.id.menu_sort:
                 bottomSheetDialog.show();
@@ -227,7 +249,31 @@ abstract class AppListActivity extends AppCompatActivity {
                 return true;
             case R.id.menu_home:
                 Timber.i("Test menu home click");
-                Collect.getInstance().setPageActive("homeButtonPressed");
+                Collect.getInstance().setPageActive(Collect.MENU_HOME_CLICK);
+                finish();
+                return true;
+            case R.id.menu_download:
+                Timber.i("Test menu download collect click");
+                Timber.i("Test menu name = "+getTitle());
+                menuPage = Collect.MENU_DOWNLOAD_CLICK;
+
+                Collect.getInstance().setPageActive(menuPage);
+                finish();
+                return true;
+            case R.id.menu_upload:
+                Timber.i("Test menu upload collect click");
+                Timber.i("Test menu name = "+getTitle());
+                menuPage = Collect.MENU_UPLOAD_CLICK;
+
+                Collect.getInstance().setPageActive(menuPage);
+                finish();
+                return true;
+            case R.id.menu_collect:
+                Timber.i("Test menu upload collect click");
+                Timber.i("Test menu name = "+getTitle());
+                menuPage = Collect.MENU_COLLECT_CLICK;
+
+                Collect.getInstance().setPageActive(menuPage);
                 finish();
                 return true;
         }

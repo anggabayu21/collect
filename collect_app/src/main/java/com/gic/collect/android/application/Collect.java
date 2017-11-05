@@ -82,6 +82,10 @@ public class Collect extends Application {
     public static final int DEFAULT_FONTSIZE_INT = 21;
     public static final String OFFLINE_LAYERS = ODK_ROOT + File.separator + "layers";
     public static final String SETTINGS = ODK_ROOT + File.separator + "settings";
+    public static final String MENU_HOME_CLICK = "homeButtonPressed";
+    public static final String MENU_COLLECT_CLICK = "collectButtonPressed";
+    public static final String MENU_DOWNLOAD_CLICK = "downloadButtonPressed";
+    public static final String MENU_UPLOAD_CLICK = "uploadButtonPressed";
     public static String defaultSysLanguage;
     private static Collect singleton = null;
 

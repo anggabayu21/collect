@@ -25,9 +25,28 @@
         app:showAsAction="always|collapseActionView"/>
 
     <item
+        android:id="@+id/menu_download"
+        android:icon="@drawable/download"
+        android:title="@string/menu_download"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/menu_upload"
+        android:icon="@drawable/upload"
+        android:title="@string/menu_upload"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/menu_collect"
+        android:icon="@drawable/collect"
+        android:title="@string/menu_collect"
+        app:showAsAction="always"/>
+
+    <item
         android:id="@+id/menu_home"
         android:icon="@drawable/ic_home"
         android:title="@string/home"
         app:showAsAction="always"/>
+
 
 </menu>

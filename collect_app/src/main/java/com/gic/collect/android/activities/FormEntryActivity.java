@@ -313,6 +313,7 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
         boolean newForm = true;
         autoSaved = false;
         if (savedInstanceState != null) {
+            Timber.i("Test go here 1");
             if (savedInstanceState.containsKey(KEY_FORMPATH)) {
                 formPath = savedInstanceState.getString(KEY_FORMPATH);
             }
@@ -350,12 +351,16 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
         // Check to see if this is a screen flip or a new form load.
         Object data = getLastCustomNonConfigurationInstance();
         if (data instanceof FormLoaderTask) {
+
             formLoaderTask = (FormLoaderTask) data;
         } else if (data instanceof SaveToDiskTask) {
+
             saveToDiskTask = (SaveToDiskTask) data;
         } else if (data == null) {
+            Timber.i("Test go here 1");
             if (!newForm) {
                 if (Collect.getInstance().getFormController() != null) {
+
                     refreshCurrentView();
                 } else {
                     Timber.w("Reloading form and restoring state.");
@@ -607,6 +612,7 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent intent) {
+        Timber.i("Test onActivityResult start");
         super.onActivityResult(requestCode, resultCode, intent);
         FormController formController = Collect.getInstance()
                 .getFormController();
@@ -802,6 +808,7 @@ public class FormEntryActivity extends AppCompatActivity implements AnimationLis
                 break;
 
         }
+        Timber.i("Test onActivityResult");
         refreshCurrentView();
     }
 

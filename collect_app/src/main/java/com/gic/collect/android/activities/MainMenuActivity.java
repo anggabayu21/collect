@@ -41,6 +41,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.gic.collect.android.R;
 import com.gic.collect.android.dao.FormsDao;
 import com.gic.collect.android.listeners.MenuPageListener;
 import com.gic.collect.android.preferences.AdminPreferencesActivity;
@@ -320,6 +321,7 @@ public class MainMenuActivity extends AppCompatActivity {
     private void initToolbar() {
         Toolbar toolbar = (Toolbar) findViewById(com.gic.collect.android.R.id.toolbar);
         setTitle(getString(com.gic.collect.android.R.string.main_menu));
+        toolbar.setNavigationIcon(R.drawable.notes);
         setSupportActionBar(toolbar);
     }
 
@@ -343,9 +345,19 @@ public class MainMenuActivity extends AppCompatActivity {
         Timber.i("Test onResume");
         Timber.i("Test Active page = "+Collect.getInstance().getPageActive());
 
-        if(!Collect.getInstance().getPageActive().equals("homeButtonPressed")){
+        if(Collect.getInstance().getPageActive().equals(Collect.MENU_COLLECT_CLICK)){
+            enterDataButton.callOnClick();
+        }
+        else if(Collect.getInstance().getPageActive().equals(Collect.MENU_DOWNLOAD_CLICK)){
+            getFormsButton.callOnClick();
+        }
+        else if(Collect.getInstance().getPageActive().equals(Collect.MENU_UPLOAD_CLICK)){
+            sendDataButton.callOnClick();
+        }
+        else if(!Collect.getInstance().getPageActive().equals(Collect.MENU_HOME_CLICK)){
             downloadedFormVoid();
         }
+
         Collect.getInstance().setPageActive("");
 
         super.onResume();

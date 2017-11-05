@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ConfigurationInfo;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -32,6 +33,8 @@ import com.gic.collect.android.activities.FormEntryActivity;
 import com.gic.collect.android.activities.GeoPointActivity;
 import com.gic.collect.android.activities.GeoPointMapActivity;
 import com.gic.collect.android.logic.FormController;
+import com.gic.collect.android.logic.LocationDetails;
+import com.gic.collect.android.tasks.GeoPointTask;
 import com.gic.collect.android.utilities.PlayServicesUtil;
 import com.gic.collect.android.activities.GeoPointOsmMapActivity;
 
@@ -45,6 +48,8 @@ import com.gic.collect.android.preferences.PreferenceKeys;
 
 import java.text.DecimalFormat;
 
+import timber.log.Timber;
+
 /**
  * GeoPointWidget is the widget that allows the user to get GPS readings.
  *
@@ -53,13 +58,13 @@ import java.text.DecimalFormat;
  * @author Jon Nordling (jonnordling@gmail.com)
  */
 @SuppressLint("ViewConstructor")
-public class GeoPointWidget extends QuestionWidget implements BinaryWidget {
+public class GeoPointWidget extends QuestionWidget implements BinaryWidget, GeoPointTask.LocationListener {
     public static final String LOCATION = "gp";
     public static final String ACCURACY_THRESHOLD = "accuracyThreshold";
     public static final String READ_ONLY = "readOnly";
     public static final String DRAGGABLE_ONLY = "draggable";
 
-    public static final double DEFAULT_LOCATION_ACCURACY = 5.0;
+    public static final double DEFAULT_LOCATION_ACCURACY = 10.0; //original value = 5.0
     private static final String GOOGLE_MAP_KEY = "google_maps";
     private final boolean readOnly;
     private final boolean useMapsV2;
@@ -71,10 +76,14 @@ public class GeoPointWidget extends QuestionWidget implements BinaryWidget {
     private double accuracyThreshold;
     private boolean draggable = true;
 
+    private GeoPointTask geoPointTask;
+    private GeoPointWidget geoPointWidget;
+
     private String stringAnswer;
 
     public GeoPointWidget(Context context, FormEntryPrompt prompt) {
         super(context, prompt);
+        geoPointWidget = this;
 
         // Determine the activity threshold to use
         String acc = prompt.getQuestion().getAdditionalAttribute(null, ACCURACY_THRESHOLD);
@@ -151,8 +160,14 @@ public class GeoPointWidget extends QuestionWidget implements BinaryWidget {
                     formController.setIndexWaitingForData(formEntryPrompt.getIndex());
                 }
 
-                ((Activity) getContext()).startActivityForResult(i,
-                        FormEntryActivity.LOCATION_CAPTURE);
+                ((Activity) getContext()).startActivityForResult(i, FormEntryActivity.LOCATION_CAPTURE);
+
+//                geoPointTask = new GeoPointTask();
+//                geoPointTask.setLocationListener(geoPointWidget);
+//                geoPointTask.setContextParent(getContext());
+//                geoPointTask.setLocationAccuracy(accuracyThreshold);
+//                geoPointTask.execute();
+
             }
         });
 
@@ -174,6 +189,11 @@ public class GeoPointWidget extends QuestionWidget implements BinaryWidget {
         }
         updateButtonLabelsAndVisibility(dataAvailable);
 
+    }
+
+    @Override
+    public void locationComplete(LocationDetails result) {
+        Timber.i("Test Location complete");
     }
 
     private void updateButtonLabelsAndVisibility(boolean dataAvailable) {

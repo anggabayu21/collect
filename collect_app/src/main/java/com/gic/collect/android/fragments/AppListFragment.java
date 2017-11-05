@@ -107,6 +107,26 @@ abstract class AppListFragment extends ListFragment {
         final MenuItem sortItem = menu.findItem(R.id.menu_sort);
         final MenuItem searchItem = menu.findItem(R.id.menu_filter);
         final MenuItem homeItem = menu.findItem(R.id.menu_home);
+        final MenuItem downloadItem = menu.findItem(R.id.menu_download);
+        final MenuItem uploadItem = menu.findItem(R.id.menu_upload);
+        final MenuItem collectItem = menu.findItem(R.id.menu_collect);
+
+        if(getActivity().getTitle().equals(getString(R.string.enter_data))  ){ //collect page
+            collectItem.setVisible(false);
+            uploadItem.setVisible(true);
+            downloadItem.setVisible(true);
+        }
+        else if(getActivity().getTitle().equals(getString(R.string.get_forms))  ){ //download page
+            collectItem.setVisible(true);
+            uploadItem.setVisible(true);
+            downloadItem.setVisible(false);
+        }
+        else if(getActivity().getTitle().equals(getString(R.string.send_data))  ){ //upload page
+            collectItem.setVisible(true);
+            uploadItem.setVisible(false);
+            downloadItem.setVisible(true);
+        }
+
         final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setQueryHint(getResources().getString(R.string.search));
         searchView.setMaxWidth(Integer.MAX_VALUE);
@@ -151,7 +171,25 @@ abstract class AppListFragment extends ListFragment {
                 return true;
             case R.id.menu_home:
                 Timber.i("Test menu home click");
-                Collect.getInstance().setPageActive("homeButtonPressed");
+                Collect.getInstance().setPageActive(Collect.MENU_HOME_CLICK);
+                getActivity().finish();
+                return true;
+            case R.id.menu_download:
+                Timber.i("Test menu download collect click");
+
+                Collect.getInstance().setPageActive(Collect.MENU_DOWNLOAD_CLICK);
+                getActivity().finish();
+                return true;
+            case R.id.menu_upload:
+                Timber.i("Test menu upload collect click");
+
+                Collect.getInstance().setPageActive(Collect.MENU_UPLOAD_CLICK);
+                getActivity().finish();
+                return true;
+            case R.id.menu_collect:
+                Timber.i("Test menu upload collect click");
+
+                Collect.getInstance().setPageActive(Collect.MENU_COLLECT_CLICK);
                 getActivity().finish();
                 return true;
         }
